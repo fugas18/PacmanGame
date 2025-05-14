@@ -64,15 +64,11 @@ def game_loop():
     pacman_dx = 0
     pacman_dy = 0
 
-    # Coordenadas da comida
-    food_x = random.randint(20, SCREEN_WIDTH - 20)
-    food_y = random.randint(20, SCREEN_HEIGHT - 20)
+    # Inicializando as comidas (gerando múltiplas)
+    foods = [{'x': random.randint(20, SCREEN_WIDTH - 20), 'y': random.randint(20, SCREEN_HEIGHT - 20)} for _ in range(5)]
 
-    # Inicializando os fantasmas (mais de um fantasma)
-    ghosts = [
-        {'x': random.randint(20, SCREEN_WIDTH - 20), 'y': random.randint(20, SCREEN_HEIGHT - 20)},
-        {'x': random.randint(20, SCREEN_WIDTH - 20), 'y': random.randint(20, SCREEN_HEIGHT - 20)}
-    ]
+    # Inicializando os fantasmas (aumentando a quantidade)
+    ghosts = [{'x': random.randint(20, SCREEN_WIDTH - 20), 'y': random.randint(20, SCREEN_HEIGHT - 20)} for _ in range(3)]
 
     # Pontuação
     score = 0
@@ -111,11 +107,11 @@ def game_loop():
         if pacman_y > SCREEN_HEIGHT:
             pacman_y = SCREEN_HEIGHT
 
-        # Verificar colisão com a comida
-        if abs(pacman_x - food_x) < 20 and abs(pacman_y - food_y) < 20:
-            food_x = random.randint(20, SCREEN_WIDTH - 20)
-            food_y = random.randint(20, SCREEN_HEIGHT - 20)
-            score += 1
+        # Verificar colisão com as comidas
+        for food in foods[:]:
+            if abs(pacman_x - food['x']) < 20 and abs(pacman_y - food['y']) < 20:
+                foods.remove(food)  # Comida coletada
+                score += 1
 
         # Verificar colisão com os fantasmas
         for ghost in ghosts:
@@ -129,9 +125,10 @@ def game_loop():
         # Atualizar a tela
         screen.fill(BLACK)
 
-        # Desenhar o Pac-Man, comida e fantasmas
+        # Desenhar o Pac-Man, comidas e fantasmas
         draw_pacman(pacman_x, pacman_y)
-        draw_food(food_x, food_y)
+        for food in foods:
+            draw_food(food['x'], food['y'])
         for ghost in ghosts:
             draw_ghost(ghost['x'], ghost['y'])
 
