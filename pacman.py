@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 
 # Inicializando o Pygame
 pygame.init()
@@ -34,6 +35,26 @@ def draw_food(x, y):
 def draw_ghost(x, y):
     pygame.draw.circle(screen, RED, (x, y), 20)
 
+# Função para mover o fantasma em direção ao Pac-Man
+def move_ghost(ghost_x, ghost_y, pacman_x, pacman_y, speed=2):
+    # Calcular a diferença de posição
+    dx = pacman_x - ghost_x
+    dy = pacman_y - ghost_y
+
+    # Calcular a distância entre o fantasma e o Pac-Man
+    distance = math.sqrt(dx**2 + dy**2)
+
+    # Normalizar a direção do movimento
+    if distance != 0:
+        dx /= distance
+        dy /= distance
+
+    # Mover o fantasma na direção do Pac-Man
+    ghost_x += dx * speed
+    ghost_y += dy * speed
+
+    return ghost_x, ghost_y
+
 # Função principal do jogo
 def game_loop():
     # Coordenadas iniciais do Pac-Man
@@ -47,9 +68,11 @@ def game_loop():
     food_x = random.randint(20, SCREEN_WIDTH - 20)
     food_y = random.randint(20, SCREEN_HEIGHT - 20)
 
-    # Coordenadas do fantasma
-    ghost_x = random.randint(20, SCREEN_WIDTH - 20)
-    ghost_y = random.randint(20, SCREEN_HEIGHT - 20)
+    # Inicializando os fantasmas (mais de um fantasma)
+    ghosts = [
+        {'x': random.randint(20, SCREEN_WIDTH - 20), 'y': random.randint(20, SCREEN_HEIGHT - 20)},
+        {'x': random.randint(20, SCREEN_WIDTH - 20), 'y': random.randint(20, SCREEN_HEIGHT - 20)}
+    ]
 
     # Pontuação
     score = 0
@@ -94,18 +117,23 @@ def game_loop():
             food_y = random.randint(20, SCREEN_HEIGHT - 20)
             score += 1
 
-        # Verificar colisão com o fantasma
-        if abs(pacman_x - ghost_x) < 20 and abs(pacman_y - ghost_y) < 20:
-            game_running = False
-            print("Game Over! Pontuação final:", score)
+        # Verificar colisão com os fantasmas
+        for ghost in ghosts:
+            if abs(pacman_x - ghost['x']) < 20 and abs(pacman_y - ghost['y']) < 20:
+                game_running = False
+                print("Game Over! Pontuação final:", score)
+
+            # Mover o fantasma em direção ao Pac-Man
+            ghost['x'], ghost['y'] = move_ghost(ghost['x'], ghost['y'], pacman_x, pacman_y)
 
         # Atualizar a tela
         screen.fill(BLACK)
 
-        # Desenhar o Pac-Man, comida e fantasma
+        # Desenhar o Pac-Man, comida e fantasmas
         draw_pacman(pacman_x, pacman_y)
         draw_food(food_x, food_y)
-        draw_ghost(ghost_x, ghost_y)
+        for ghost in ghosts:
+            draw_ghost(ghost['x'], ghost['y'])
 
         # Exibir a pontuação
         font = pygame.font.SysFont("Arial", 25)
