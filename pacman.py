@@ -75,22 +75,57 @@ def draw_food(x, y):
     pygame.draw.circle(screen, WHITE, (x, y), 5)
 
 # Função para desenhar o fantasma
-def draw_ghost(x, y):
-    pygame.draw.circle(screen, RED, (x, y), 15)
+def draw_ghost(x, y, color):
+    pygame.draw.circle(screen, color, (int(x), int(y)), 15)
+
 
 # Função para mover o fantasma em direção ao Pac-Man
-def move_ghost(ghost_x, ghost_y, pacman_x, pacman_y, speed=2):
-    dx = pacman_x - ghost_x
-    dy = pacman_y - ghost_y
-    distance = math.hypot(dx, dy)
-    if distance != 0:
-        dx /= distance
-        dy /= distance
-    next_x = ghost_x + dx * speed
-    next_y = ghost_y + dy * speed
-    if can_move(next_x, next_y):
-        return next_x, next_y
-    return ghost_x, ghost_y
+def move_ghost(ghost, pacman_x, pacman_y):
+    speed = 2
+    x, y = ghost['x'], ghost['y']
+
+    if ghost['type'] == 'chaser':
+        # Vai direto ao Pac-Man
+        dx = pacman_x - x
+        dy = pacman_y - y
+        distance = math.hypot(dx, dy)
+        if distance != 0:
+            dx /= distance
+            dy /= distance
+        next_x = x + dx * speed
+        next_y = y + dy * speed
+        if can_move(next_x, next_y):
+            ghost['x'] = next_x
+            ghost['y'] = next_y
+
+    elif ghost['type'] == 'random':
+        # Anda na direção atual até bater, depois muda
+        dx, dy = ghost['dir']
+        next_x = x + dx * speed
+        next_y = y + dy * speed
+        if can_move(next_x, next_y):
+            ghost['x'] = next_x
+            ghost['y'] = next_y
+        else:
+            ghost['dir'] = random.choice([(1,0), (-1,0), (0,1), (0,-1)])
+
+    elif ghost['type'] == 'trailer':
+        # Persegue o Pac-Man, mas só muda direção de vez em quando
+        if random.randint(0, 15) == 0:
+            dx = pacman_x - x
+            dy = pacman_y - y
+            distance = math.hypot(dx, dy)
+            if distance != 0:
+                dx /= distance
+                dy /= distance
+            ghost['dir'] = (dx, dy)
+        dx, dy = ghost['dir']
+        next_x = x + dx * speed
+        next_y = y + dy * speed
+        if can_move(next_x, next_y):
+            ghost['x'] = next_x
+            ghost['y'] = next_y
+
 
 # Função principal do jogo
 def game_loop():
@@ -108,13 +143,23 @@ def game_loop():
 
     # Inicializando os fantasmas (em posições aleatórias livres)
     ghosts = []
-    for _ in range(3):
+    types = ['chaser', 'random', 'trailer']
+    colors = [RED, BLUE, (0, 255, 0)]  # vermelho, azul, verde
+
+    for i in range(3):
         while True:
             gx = random.randint(0, MAP_WIDTH - 1)
             gy = random.randint(0, MAP_HEIGHT - 1)
             if MAP[gy][gx] == 0:
-                ghosts.append({'x': gx * TILE_SIZE + TILE_SIZE // 2, 'y': gy * TILE_SIZE + TILE_SIZE // 2})
+                ghosts.append({
+                    'x': gx * TILE_SIZE + TILE_SIZE // 2,
+                    'y': gy * TILE_SIZE + TILE_SIZE // 2,
+                    'type': types[i],
+                    'color': colors[i],
+                    'dir': random.choice([(1,0), (-1,0), (0,1), (0,-1)])
+                })
                 break
+
 
     score = 0
     game_running = True
@@ -146,7 +191,8 @@ def game_loop():
 
         # Atualizar os fantasmas
         for ghost in ghosts:
-            ghost['x'], ghost['y'] = move_ghost(ghost['x'], ghost['y'], pacman_x, pacman_y)
+            move_ghost(ghost, pacman_x, pacman_y)
+
 
         # Verificar colisão com as comidas
         for food in foods[:]:
@@ -167,7 +213,7 @@ def game_loop():
         for food in foods:
             draw_food(food['x'], food['y'])
         for ghost in ghosts:
-            draw_ghost(ghost['x'], ghost['y'])
+            draw_ghost(ghost['x'], ghost['y'], ghost['color'])
 
         # Exibir a pontuação
         font = pygame.font.SysFont("Arial", 25)
