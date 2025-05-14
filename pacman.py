@@ -1,0 +1,124 @@
+import pygame
+import random
+
+# Inicializando o Pygame
+pygame.init()
+
+# Definir as cores
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+YELLOW = (255, 255, 0)
+BLUE = (0, 0, 255)
+RED = (255, 0, 0)
+
+# Tamanho da tela
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 600
+
+# Criar a tela do jogo
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Pac-Man Básico")
+
+# Definir o relógio para controlar a taxa de quadros
+clock = pygame.time.Clock()
+
+# Função para desenhar o Pac-Man
+def draw_pacman(x, y):
+    pygame.draw.circle(screen, YELLOW, (x, y), 20)
+
+# Função para desenhar a comida
+def draw_food(x, y):
+    pygame.draw.circle(screen, BLUE, (x, y), 10)
+
+# Função para desenhar o fantasma
+def draw_ghost(x, y):
+    pygame.draw.circle(screen, RED, (x, y), 20)
+
+# Função principal do jogo
+def game_loop():
+    # Coordenadas iniciais do Pac-Man
+    pacman_x = SCREEN_WIDTH // 2
+    pacman_y = SCREEN_HEIGHT // 2
+
+    pacman_dx = 0
+    pacman_dy = 0
+
+    # Coordenadas da comida
+    food_x = random.randint(20, SCREEN_WIDTH - 20)
+    food_y = random.randint(20, SCREEN_HEIGHT - 20)
+
+    # Coordenadas do fantasma
+    ghost_x = random.randint(20, SCREEN_WIDTH - 20)
+    ghost_y = random.randint(20, SCREEN_HEIGHT - 20)
+
+    # Pontuação
+    score = 0
+
+    game_running = True
+
+    while game_running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    pacman_dx = -5
+                    pacman_dy = 0
+                if event.key == pygame.K_RIGHT:
+                    pacman_dx = 5
+                    pacman_dy = 0
+                if event.key == pygame.K_UP:
+                    pacman_dy = -5
+                    pacman_dx = 0
+                if event.key == pygame.K_DOWN:
+                    pacman_dy = 5
+                    pacman_dx = 0
+
+        # Atualizar a posição do Pac-Man
+        pacman_x += pacman_dx
+        pacman_y += pacman_dy
+
+        # Verificar colisão com as bordas
+        if pacman_x < 0:
+            pacman_x = 0
+        if pacman_x > SCREEN_WIDTH:
+            pacman_x = SCREEN_WIDTH
+        if pacman_y < 0:
+            pacman_y = 0
+        if pacman_y > SCREEN_HEIGHT:
+            pacman_y = SCREEN_HEIGHT
+
+        # Verificar colisão com a comida
+        if abs(pacman_x - food_x) < 20 and abs(pacman_y - food_y) < 20:
+            food_x = random.randint(20, SCREEN_WIDTH - 20)
+            food_y = random.randint(20, SCREEN_HEIGHT - 20)
+            score += 1
+
+        # Verificar colisão com o fantasma
+        if abs(pacman_x - ghost_x) < 20 and abs(pacman_y - ghost_y) < 20:
+            game_running = False
+            print("Game Over! Pontuação final:", score)
+
+        # Atualizar a tela
+        screen.fill(BLACK)
+
+        # Desenhar o Pac-Man, comida e fantasma
+        draw_pacman(pacman_x, pacman_y)
+        draw_food(food_x, food_y)
+        draw_ghost(ghost_x, ghost_y)
+
+        # Exibir a pontuação
+        font = pygame.font.SysFont("Arial", 25)
+        score_text = font.render(f"Pontuação: {score}", True, WHITE)
+        screen.blit(score_text, (10, 10))
+
+        # Atualizar a tela
+        pygame.display.update()
+
+        # Controlar a taxa de quadros
+        clock.tick(30)
+
+    pygame.quit()
+
+# Iniciar o jogo
+game_loop()
